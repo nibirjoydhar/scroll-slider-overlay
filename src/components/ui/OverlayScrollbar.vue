@@ -67,10 +67,12 @@ const handleThumbMouseDown = (e: MouseEvent) => {
   document.body.style.userSelect = 'none'
   document.body.style.cursor = 'grabbing'
 
-  document.addEventListener('mousemove', handleMouseMove)
-  document.addEventListener('mouseup', handleMouseUp)
-  
+  // Prevent text selection on drag
   e.preventDefault()
+  e.stopPropagation()
+
+  document.addEventListener('mousemove', handleMouseMove, { passive: false })
+  document.addEventListener('mouseup', handleMouseUp, { once: true })
 }
 
 const handleMouseMove = (e: MouseEvent) => {
@@ -88,14 +90,19 @@ const handleMouseMove = (e: MouseEvent) => {
     const newScrollTop = Math.max(0, Math.min(dragStartScrollTop.value + scrollDelta, maxScrollTop))
     container.scrollTop = newScrollTop
   }
+  
+  e.preventDefault()
+  e.stopPropagation()
 }
 
 const handleMouseUp = () => {
   isDragging.value = false
+  // Only reset if not hovering
+  if (!isHover.value) {
+    document.body.style.cursor = ''
+  }
   document.body.style.userSelect = ''
-  document.body.style.cursor = ''
   document.removeEventListener('mousemove', handleMouseMove)
-  document.removeEventListener('mouseup', handleMouseUp)
 }
 
 const handleScroll = () => {
@@ -203,35 +210,40 @@ onUnmounted(() => {
   background: transparent;
   pointer-events: none;
   z-index: 999;
+  transition: background-color 0.2s ease;
 }
 
 .scrollbar-track.is-hover {
   background-color: rgba(0, 0, 0, 0.08);
-  pointer-events: auto;
 }
 
 .scrollbar-track.is-dragging {
   background-color: rgba(0, 0, 0, 0.15);
-  pointer-events: auto;
 }
 
-/* Scrollbar thumb */
+/* Scrollbar thumb - always interactive */
 .scrollbar-thumb {
   position: absolute;
   width: 100%;
   background: rgba(0, 0, 0, 0.35);
   border-radius: 5px;
-  cursor: grab;
   left: 0;
   will-change: transform;
-  transition: background-color 0.2s ease;
   min-height: 30px;
+  pointer-events: auto !important;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  transition: background-color 0.15s ease;
 }
 
 .scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.55);
 }
 
+.scrollbar-thumb:active,
 .scrollbar-track.is-dragging .scrollbar-thumb {
   background: rgba(0, 0, 0, 0.75);
   cursor: grabbing;
